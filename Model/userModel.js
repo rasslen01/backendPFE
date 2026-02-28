@@ -7,13 +7,14 @@ const userSchema = new mongoose.Schema({
     password:{ type: String, required: true, minlength: 6 , },
     role: {
         type: String,
-        enum: ['admin', 'student', 'center'],
-        default: 'student'
+        enum: ['ADMIN', 'STUDENT', 'CENTRE'],
+        default: 'STUDENT'
     },
     age: Number,
     city: String,
     user_Image :{ type: String , required: false, default:'client.png' },
-    isActive: Boolean
+    isActive: Boolean,
+    xp: { type: Number, default: 0 },
 });
 
 const User = mongoose.model('User', userSchema);
