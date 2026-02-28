@@ -15,6 +15,10 @@ const userSchema = new mongoose.Schema({
     user_Image :{ type: String , required: false, default:'client.png' },
     isActive: Boolean,
     xp: { type: Number, default: 0 },
+     badges: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Badge'
+    }]
 });
 
 const User = mongoose.model('User', userSchema);
