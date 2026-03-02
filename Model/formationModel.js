@@ -13,7 +13,14 @@ const formationSchema = new mongoose.Schema({
         type: String, 
         enum: ['pending', 'accepted', 'rejected'], 
         default: 'pending' 
-    }
+    },
+     // ✅ Champs utiles pour recommandations
+  domain: { type: String, default: "" },                 // ex: "Développement Web"
+  skills: { type: [String], default: [] },               // ex: ["React","Node.js"]
+  level: { type: String, default: "" },                  // ex: "Débutant" / "Intermédiaire" / "Avancé" / "Expert"
+  difficulty: { type: String, default: "" },             // ex: "Facile" / "Moyen" / "Difficile" / "Expert"
+  learningStyle: { type: [String], default: [] },      // ex: ["Visuel","Auditif"]
+
 });
 
 const Formation = mongoose.model('Formation', formationSchema);

@@ -6,6 +6,7 @@ var logger = require('morgan');
 
 const http = require('http');
 require('dotenv').config();
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
 const { connectDB } = require('./config/db');
 const cors = require('cors');

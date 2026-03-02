@@ -119,4 +119,48 @@ module.exports.deleteUser = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Error deleting user: ' + error.message });
     }
+
+};
+module.exports.savePreferences = async (req, res) => {
+  try {
+    // ✅ userId depuis token (recommandé)
+    const userId = req.user.id;
+
+    const updatedUser = await userModel.findByIdAndUpdate(
+      userId,
+      {
+        preferences: req.body,
+        preferencesCompleted: true
+      },
+      { new: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "Preferences saved successfully",
+      user: updatedUser
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: 'Error saving preferences: ' + error.message });
+  }
+};
+module.exports.getPreferences = async (req, res) => {
+  try {
+    const user = await userModel.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json({
+      preferences: user.preferences || {}
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };

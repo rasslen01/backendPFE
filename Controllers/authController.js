@@ -2,15 +2,19 @@ const userModel = require('../Model/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = "mySecretKey";
-
+const JWT_SECRET = process.env.JWT_SECRET || "mySecretKey";
 // ================= REGISTER =================
 exports.register = async (req, res) => {
   try {
+    console.log("REGISTER BODY:", req.body);
+
     const { name, email, password, role, speciality } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ error: "All fields required" });
+      return res.status(400).json({
+        error: "All fields required",
+        details: { name: !!name, email: !!email, password: !!password }
+      });
     }
 
     const existingUser = await userModel.findOne({ email });
@@ -53,7 +57,8 @@ exports.login = async (req, res) => {
   try {
     const { email, password, role } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await userModel.findOne({ email });
+
     if (!user)
       return res.status(404).json({ error: "Account not found" });
 
@@ -61,21 +66,22 @@ exports.login = async (req, res) => {
       return res.status(403).json({ error: "Access denied for this role" });
 
     const match = await bcrypt.compare(password, user.password);
+
     if (!match)
       return res.status(401).json({ error: "Invalid email or password" });
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
-      "secretKey",
+      JWT_SECRET,   // ✅ même secret
       { expiresIn: "1d" }
     );
 
-    res.json({
+    res.status(200).json({
       token,
       user
     });
 
   } catch (err) {
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: err.message });
   }
 };
