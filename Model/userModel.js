@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema({
     },
     age: Number,
     city: String,
-    user_Image :{ type: String , required: false, default:'client.png' },
+    user_Image :{ type: String , required: false, default:'client.jpg' },
     isActive: Boolean,
     xp: { type: Number, default: 0 },
      badges: [{

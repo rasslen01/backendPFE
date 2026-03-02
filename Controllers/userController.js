@@ -72,36 +72,55 @@ module.exports.addUser = async (req, res) => {
 
 
 // ================= UPDATE USER =================
+// ================= UPDATE USER =================
 module.exports.updateUser = async (req, res) => {
-    try {
-        const userId = req.params.id;
+  try {
+    const userId = req.params.id;
 
-        const updateData = { ...req.body };
+    // Clone body
+    const updateData = { ...req.body };
 
-        if (updateData.password) {
-            updateData.password = await bcrypt.hash(updateData.password, 10);
-        }
+    // Ne jamais stocker oldPassword dans Mongo
+    if (updateData.oldPassword !== undefined) delete updateData.oldPassword;
 
-        const updatedUser = await userModel.findByIdAndUpdate(
-            userId,
-            updateData,
-            { new: true }
-        ).select('-password');
-
-        if (!updatedUser) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        res.status(200).json({
-            message: 'User updated successfully',
-            user: updatedUser
-        });
-
-    } catch (error) {
-        res.status(500).json({ error: 'Error updating user: ' + error.message });
+    // Si password envoyé et non vide => hash
+    if (typeof updateData.password === "string" && updateData.password.trim() !== "") {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    } else {
+      // si password vide => ne rien modifier
+      delete updateData.password;
     }
-};
 
+    const updatedUser = await userModel
+      .findByIdAndUpdate(userId, updateData, {
+        new: true,
+        runValidators: true, // ✅ important
+        context: "query",
+      })
+      .select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    return res.status(200).json({
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    // ✅ Duplicate email (unique)
+    if (error.code === 11000) {
+      return res.status(400).json({ error: "Email already exists." });
+    }
+
+    // ✅ Validation mongoose (email invalid, minlength, enum...)
+    if (error.name === "ValidationError") {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.status(500).json({ error: "Error updating user: " + error.message });
+  }
+};
 
 // ================= DELETE USER =================
 module.exports.deleteUser = async (req, res) => {
