@@ -1,8 +1,10 @@
 const userModel = require('../Model/userModel');
+const centreModel = require("../Model/centreModel"); // ✅ ADD
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || "mySecretKey";
+
 // ================= REGISTER =================
 exports.register = async (req, res) => {
   try {
@@ -24,15 +26,30 @@ exports.register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // ✅ normalize role to uppercase
+    const normalizedRole = (role || "STUDENT").toUpperCase();
+
     const newUser = new userModel({
       name,
       email,
       password: hashedPassword,
-      role: role || "STUDENT",
+      role: normalizedRole,
       speciality
     });
 
     await newUser.save();
+
+    // ✅ If CENTRE: also create Centre document
+    if (normalizedRole === "CENTRE") {
+      const existingCentre = await centreModel.findOne({ email: email.toLowerCase() });
+      if (!existingCentre) {
+        await centreModel.create({
+          name,
+          email,          // centreModel has lowercase:true so ok
+          // status will be "pending" by default
+        });
+      }
+    }
 
     const token = jwt.sign(
       { id: newUser._id, role: newUser.role },
@@ -47,6 +64,7 @@ exports.register = async (req, res) => {
     });
 
   } catch (err) {
+    console.error("REGISTER ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 };
