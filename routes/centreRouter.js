@@ -11,5 +11,6 @@ router.delete('/deleteCentre/:id', centreController.deleteCentre);
 router.put('/acceptCentre/:id', centreController.acceptCentre);
 router.put('/rejectCentre/:id', centreController.rejectCentre);
 router.get('/searchCentres', centreController.searchCentres);
+router.get('/getAcceptedCentres', centreController.getAcceptedCentres);
 
 module.exports = router;

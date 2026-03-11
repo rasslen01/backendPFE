@@ -13,5 +13,6 @@ router.delete('/deleteFormation/:id', formationController.deleteFormation);
 router.put('/acceptFormation/:id', formationController.acceptFormation);
 router.put('/rejectFormation/:id', formationController.rejectFormation);
 router.get('/getRecommendedFormations', verifyToken, recommendationController.getRecommendedFormations);
+router.get('/getFormationsByCentre/:centre', formationController.getFormationsByCentre);
 
 module.exports = router;
