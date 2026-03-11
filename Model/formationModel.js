@@ -14,6 +14,7 @@ const formationSchema = new mongoose.Schema({
         enum: ['pending', 'accepted', 'rejected'], 
         default: 'pending' 
     },
+    centreLogo: { type: String, default: "" },
      // ✅ Champs utiles pour recommandations
   domain: { type: String, default: "" },                 // ex: "Développement Web"
   skills: { type: [String], default: [] },               // ex: ["React","Node.js"]
