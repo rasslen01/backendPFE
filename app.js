@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 const http = require('http');
+const inscriptionRouter = require('./routes/inscriptionRouter');
 require('dotenv').config();
 console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
@@ -38,6 +39,7 @@ app.use('/os' , osRouter)
 app.use('/centres' , centreRouter);
 app.use('/formations' , formationRouter);
 app.use('/auth' , authRouter);
+app.use('/inscriptions' , inscriptionRouter);
 app.use('/' , badgeRouter);
 
 // catch 404 and forward to error handler
