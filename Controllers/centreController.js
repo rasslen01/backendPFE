@@ -93,3 +93,12 @@ module.exports.searchCentres = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+// GET ACCEPTED CENTRES
+module.exports.getAcceptedCentres = async (req, res) => {
+  try {
+    const centres = await centreModel.find({ status: "accepted" }).select("name email status");
+    res.status(200).json({ centres });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

@@ -1,4 +1,5 @@
 const formationModel = require('../Model/formationModel');
+const centreModel = require('../Model/centreModel');
 
 // GET ALL
 module.exports.getAllFormations = async (req, res) => {
@@ -80,4 +81,17 @@ module.exports.rejectFormation = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+};
+module.exports.getFormationsByCentre = async (req, res) => {
+  try {
+    const centre = req.params.centre;
+
+    const formations = await formationModel.find({
+      centre: centre
+    });
+
+    res.status(200).json({ formationsList: formations });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
