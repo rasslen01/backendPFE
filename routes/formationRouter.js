@@ -4,6 +4,7 @@ var router = express.Router();
 const formationController = require('../Controllers/formationController');
 const {verifyToken} = require('../Middleware/authMiddleware');
 const recommendationController = require('../Controllers/recommendationController');
+const {uploadFormationImage} = require('../Controllers/formationController');
 
 router.get('/getAllFormations', formationController.getAllFormations);
 router.get('/getFormation/:id', formationController.getFormation);
@@ -14,5 +15,6 @@ router.put('/acceptFormation/:id', formationController.acceptFormation);
 router.put('/rejectFormation/:id', formationController.rejectFormation);
 router.get('/getRecommendedFormations', verifyToken, recommendationController.getRecommendedFormations);
 router.get('/getFormationsByCentre/:centre', formationController.getFormationsByCentre);
+router.post('/uploadFormationImage', uploadFormationImage);
 
 module.exports = router;

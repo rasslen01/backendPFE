@@ -8,7 +8,7 @@ const formationSchema = new mongoose.Schema({
     price: { type: Number, default: 0 },
     date: Date,
     time: String,
-    image: { type: String, default: "default-formation.png" },
+    image: { type: String, default: "" },
     status: { 
         type: String, 
         enum: ['pending', 'accepted', 'rejected'], 

@@ -5,7 +5,21 @@ const centreModel = require('../Model/centreModel');
 module.exports.getAllFormations = async (req, res) => {
     try {
         const formationsList = await formationModel.find();
-        res.status(200).json({ formationsList });
+
+        const formationsWithLogo = await Promise.all(
+            formationsList.map(async (f) => {
+                const obj = f.toObject();
+                // Chercher le centre par nom et récupérer son logo Base64
+                if (!obj.centreLogo && obj.centre) {
+                    const centre = await centreModel.findOne({ name: obj.centre });
+                    if (centre && centre.logo) {
+                        obj.centreLogo = centre.logo; // déjà en Base64, utilisable directement
+                    }
+                }
+                return obj;
+            })
+        );
+        res.status(200).json({ formationsList: formationsWithLogo });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -21,25 +35,38 @@ module.exports.getFormation = async (req, res) => {
     }
 };
 
-// ADD
-module.exports.addFormation = async (req, res) => {
+// UPDATE
+module.exports.updateFormation = async (req, res) => {
     try {
-        const newFormation = await formationModel.create(req.body);
-        res.status(201).json({ newFormation });
+        const body = { ...req.body };
+        if (typeof body.centreLogo !== 'string') body.centreLogo = '';
+        
+        console.log("📦 Body reçu update:", body);
+
+        const updatedFormation = await formationModel.findByIdAndUpdate(
+            req.params.id,
+            { $set: body },   // ← changez body par { $set: body }
+            { new: true }
+        );
+
+        console.log("✅ Formation après update:", updatedFormation?.image);
+        res.status(200).json({ updatedFormation });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
 };
 
-// UPDATE
-module.exports.updateFormation = async (req, res) => {
+// ADD — même protection
+module.exports.addFormation = async (req, res) => {
     try {
-        const updatedFormation = await formationModel.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true }
-        );
-        res.status(200).json({ updatedFormation });
+        const body = { ...req.body };
+
+        if (typeof body.centreLogo !== 'string') {
+            body.centreLogo = '';
+        }
+
+        const newFormation = await formationModel.create(body);
+        res.status(201).json({ newFormation });
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
@@ -95,3 +122,32 @@ module.exports.getFormationsByCentre = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+const multer = require('multer');
+const path = require('path');
+
+// Config multer
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename: (req, file, cb) => {
+        const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        cb(null, 'formation-' + unique + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+    fileFilter: (req, file, cb) => {
+        const allowed = /jpeg|jpg|png|webp|gif/;
+        const ok = allowed.test(path.extname(file.originalname).toLowerCase());
+        ok ? cb(null, true) : cb(new Error('Image uniquement (jpg, png, webp, gif)'));
+    }
+});
+
+module.exports.uploadFormationImage = [
+    upload.single('image'),
+    (req, res) => {
+        if (!req.file) return res.status(400).json({ error: 'Aucun fichier reçu' });
+        res.status(200).json({ imageUrl: `/uploads/${req.file.filename}` });
+    }
+];
