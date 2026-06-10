@@ -18,13 +18,16 @@ var osRouter = require('./routes/osRouter');
 var centreRouter = require('./routes/centreRouter');
 var formationRouter = require('./routes/formationRouter');
 var badgeRouter = require('./routes/badgeRouter');
-var authRouter = require('./routes/authRouter');
+var authRouter       = require('./routes/authRouter');
+var evaluationRouter = require('./routes/evaluationRouter');
 
-const req = require('express/lib/request');
+// ✅ AJOUTER L'IMPORT CHATBOT
+var chatbotRouter = require('./routes/chatbotRouter');
+
+// ❌ SUPPRIMER CETTE LIGNE - elle cause l'erreur
+// const req = require('express/lib/request');
 
 var app = express();
-
-
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -35,12 +38,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use("/uploads", express.static(path.join(__dirname, 'uploads')));
 
 app.use('/users', usersRouter);
-app.use('/os' , osRouter)
+app.use('/os' , osRouter);
 app.use('/centres' , centreRouter);
 app.use('/formations' , formationRouter);
 app.use('/auth' , authRouter);
-app.use('/inscriptions' , inscriptionRouter);
-app.use('/' , badgeRouter);
+app.use('/inscriptions'  , inscriptionRouter);
+app.use('/evaluations'   , evaluationRouter);
+app.use('/badges' , badgeRouter);
+
+// ✅ AJOUTER LA ROUTE CHATBOT
+app.use('/chatbot', chatbotRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -62,5 +69,6 @@ const server = http.createServer(app);
 
 server.listen(process.env.Port , () => {
     connectDB();
-  console.log(`Server is running on port ${process.env.Port}`);
+    console.log(`Server is running on port ${process.env.Port}`);
+    console.log(`✅ Chatbot API disponible sur: http://localhost:${process.env.Port}/chatbot/message`);
 });
