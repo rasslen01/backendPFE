@@ -76,3 +76,56 @@ exports.cancelInscription = async (req, res) => {
 
   res.json(inscription);
 };
+
+// ── GET inscriptions des formations d'un centre ──────
+exports.getInscriptionsByCentre = async (req, res) => {
+  try {
+    const { centreName } = req.params;
+
+    // Trouver toutes les formations de ce centre
+    const Formation = require('../Model/formationModel');
+    const formations = await Formation.find({
+      centre: { $regex: new RegExp('^' + centreName + '$', 'i') }
+    }).select('_id name');
+
+    if (!formations.length) {
+      return res.json([]);
+    }
+
+    const formationIds = formations.map(f => f._id);
+
+    // Trouver toutes les inscriptions pour ces formations
+    const inscriptions = await Inscription.find({ formationId: { $in: formationIds } })
+      .populate('studentId',   'name email')
+      .populate('formationId', 'name')
+      .sort({ createdAt: -1 });
+
+    res.json(inscriptions);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── PUT rejeter une inscription ───────────────────────
+exports.rejectInscription = async (req, res) => {
+  try {
+    const inscription = await Inscription.findByIdAndUpdate(
+      req.params.id,
+      { status: 'rejected' },
+      { new: true }
+    );
+    res.json(inscription);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ── DELETE supprimer une inscription ─────────────────
+exports.deleteInscription = async (req, res) => {
+  try {
+    await Inscription.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Inscription supprimée' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

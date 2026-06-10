@@ -9,6 +9,11 @@ router.get("/getMyInscriptions", verifyToken, inscriptionController.getMyInscrip
 
 router.put("/acceptInscription/:id", verifyToken, inscriptionController.acceptInscription);
 
-router.put("/cancelInscription/:id", verifyToken, inscriptionController.cancelInscription);
+router.put("/cancelInscription/:id",  verifyToken, inscriptionController.cancelInscription);
+
+// Routes Centre
+router.get("/byCentre/:centreName",   verifyToken, inscriptionController.getInscriptionsByCentre);
+router.put("/rejectInscription/:id",  verifyToken, inscriptionController.rejectInscription);
+router.delete("/delete/:id",          verifyToken, inscriptionController.deleteInscription);
 
 module.exports = router;
