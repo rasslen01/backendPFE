@@ -183,3 +183,107 @@ module.exports.getPreferences = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// ================= ADMIN STATS =================
+module.exports.getAdminStats = async (req, res) => {
+  try {
+    const userModel        = require('../Model/userModel');
+    const centreModel      = require('../Model/centreModel');
+    const formationModel   = require('../Model/formationModel');
+    const Inscription      = require('../Model/inscriptionModel');
+
+    // Comptages globaux — sans filtre strict pour éviter les 0
+    const [totalUsers, totalCentres, totalFormations, totalInscriptions] = await Promise.all([
+      userModel.countDocuments({ role: { $in: ['STUDENT', 'student'] } }),
+      centreModel.countDocuments(),
+      formationModel.countDocuments(),
+      Inscription.countDocuments(),
+    ]);
+
+    console.log('[STATS] users:', totalUsers, '| centres:', totalCentres, '| formations:', totalFormations, '| inscriptions:', totalInscriptions);
+
+    // Inscriptions des 6 derniers mois (pour graphique)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    const inscriptionsByMonth = await Inscription.aggregate([
+      { $match: { createdAt: { $gte: sixMonthsAgo } } },
+      { $group: {
+          _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+          count: { $sum: 1 }
+      }},
+      { $sort: { '_id.year': 1, '_id.month': 1 } }
+    ]);
+
+    // Top 5 formations les plus populaires
+    const topFormations = await Inscription.aggregate([
+      { $group: { _id: '$formationId', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 },
+      { $lookup: { from: 'formations', localField: '_id', foreignField: '_id', as: 'formation' } },
+      { $unwind: '$formation' },
+      { $project: { _id: 0, name: '$formation.name', centre: '$formation.centre', count: 1 } }
+    ]);
+
+    // Top 5 leaderboard XP
+    const topXP = await userModel
+      .find({ role: 'STUDENT' }, 'name xp level badges')
+      .populate('badges', 'icon name')
+      .sort({ xp: -1 })
+      .limit(5);
+
+    // Utilisateurs récents (5 derniers inscrits)
+    const recentUsers = await userModel
+      .find({ role: 'STUDENT' }, 'name email createdAt isEmailVerified')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    // Centres en attente
+    const pendingCentres = await centreModel.countDocuments({ status: 'pending' });
+
+    res.status(200).json({
+      stats: {
+        totalUsers,
+        totalCentres,
+        totalFormations,
+        totalInscriptions,
+        pendingCentres,
+      },
+      inscriptionsByMonth,
+      topFormations,
+      topXP,
+      recentUsers,
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: 'Erreur stats: ' + error.message });
+  }
+};
+module.exports.changePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+
+        if (!oldPassword || !newPassword)
+            return res.status(400).json({ error: 'Champs requis manquants.' });
+
+        if (newPassword.length < 8)
+            return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 8 caractères.' });
+
+        const user = await userModel.findById(req.params.id);
+        if (!user)
+            return res.status(404).json({ error: 'Utilisateur introuvable.' });
+
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch)
+            return res.status(401).json({ error: 'Ancien mot de passe incorrect.' });
+
+        user.password = await bcrypt.hash(newPassword, 10);
+        await user.save();
+
+        res.status(200).json({ message: 'Mot de passe mis à jour avec succès.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};

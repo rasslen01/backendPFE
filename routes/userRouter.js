@@ -27,6 +27,8 @@ router.get("/preferences", verifyToken, userController.getPreferences);
 router.get("/getUser/:id", verifyToken, userController.getUserById);
 
 // ✅ /users/me (le front l'appelle)
+router.get("/admin-stats", userController.getAdminStats); // pas de verifyToken — données publiques stats
+
 router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await require("../Model/userModel")
@@ -38,5 +40,6 @@ router.get("/me", verifyToken, async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+router.put("/change-password/:id", verifyToken, userController.changePassword);
 
 module.exports = router;
